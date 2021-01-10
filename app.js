@@ -1,5 +1,3 @@
-const express = require('express')
-const app = express()
 const { default: axios } = require("axios")
 const fs = require("fs")
 const mongoose = require('mongoose');
@@ -16,11 +14,12 @@ const V = config.V || process.env.V
 const BASE_URL = "https://api.vk.com/method/"
 const COMMUNITY_ID = "-85443458"
 
-
+//Sleep function
 const sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+//Connecting to mongo before anything else
 connectMongo()
 
 // Making the request url
@@ -45,6 +44,7 @@ class Parameter {
 const owner_id = new Parameter("owner_id", COMMUNITY_ID)
 let offset = new Parameter("offset", 0)
 
+//Utitlity for making a request
 const getResponse = async (count, offset) => {
     const response = await axios.get(makeRequestUrl("wall.get", [owner_id, count, offset], ACCESS_TOKEN, V))
     const data = response.data.response
@@ -57,6 +57,7 @@ const getOnlyTextPost = () => {
 }
 
 
+//Filling the DB
 const uploadToDb = async () => {
 
     let count = new Parameter("count", 1)
@@ -83,6 +84,7 @@ const uploadToDb = async () => {
     
 }
 
+//Check the aneks when you start the app
 const checkAneks = async () => {
     let count = new Parameter("count", 1)
     const aneksData = await getResponse(count, offset)
@@ -123,5 +125,6 @@ launchBot()
 
 
 //uploadToDb()
+
 checkAneks()
 scheduleCheck(checkAneks)

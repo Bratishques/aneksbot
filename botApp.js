@@ -88,7 +88,7 @@ const searchScene = new WizardScene(
       ctx.wizard.state.data.aneks = await Anekdot.find({
         text: {
           $regex: `${ctx.wizard.state.data.search}`,
-          $options: "i",
+          $options: "im",
         },
       });
    
@@ -101,7 +101,9 @@ const searchScene = new WizardScene(
       );
       return ctx.wizard.next()
     } catch (e) {
+      console.log(e)
       ctx.reply(
+ 
         "Oшибочка! Среди анеков много мусора, поэтому бывают ошибочки\nПопробуй еще раз",
         startMenu
       );

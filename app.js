@@ -104,7 +104,7 @@ const checkAneks = async () => {
             const anek = new Anekdot({
               text: anekData.text,
               creation: new Date(anekData.date * 1000),
-              number: counter - 1
+              number: counter
             });
             await anek.save();
             counter++
@@ -116,6 +116,7 @@ const checkAneks = async () => {
 
 //Schedule hourly checks for new aneks
 const scheduleCheck = async (func) => {
+    func()
     setInterval(async () => {
         func()
     }, 1000 * 60 * 60)
@@ -126,5 +127,5 @@ launchBot()
 
 //uploadToDb()
 
-checkAneks()
+
 scheduleCheck(checkAneks)

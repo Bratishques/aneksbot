@@ -58,58 +58,62 @@ const getOnlyTextPost = () => {
 
 
 //Filling the DB
-const uploadToDb = async () => {
+// const uploadToDb = async () => {
 
-    let count = new Parameter("count", 1)
-    const aneksData = await getResponse(count, offset)
-    const total = aneksData.count
-    const Dbtotal = await Anekdot.countDocuments()
-    console.log(`Total aneks: ${total}`)
-    await sleep(500)
-    count = new Parameter("count", 100) 
-    for (let i = 0; i < Math.ceil(total/count.value); i++) {
-        const offset = new Parameter("offset", i * count.value)
-        const aneksData = await getResponse(count, offset)
-        console.log(`Uploading aneks from ${i*count.value} to ${(i*count.value) + 100}`)
-        aneksData.items.map(async (anekData, j) => {
-            const anek = new Anekdot({
-              text: anekData.text,
-              creation: new Date(anekData.date * 1000),
-              number: (count.value * i) + j
-            });
-            await anek.save();
-          });
-          await sleep(500)
-    }
+//     let count = new Parameter("count", 1)
+//     const aneksData = await getResponse(count, offset)
+//     const total = aneksData.count
+//     const Dbtotal = await Anekdot.countDocuments()
+//     console.log(`Total aneks: ${total}`)
+//     await sleep(500)
+//     count = new Parameter("count", 100) 
+//     for (let i = 0; i < Math.ceil(total/count.value); i++) {
+//         const offset = new Parameter("offset", i * count.value)
+//         const aneksData = await getResponse(count, offset)
+//         console.log(`Uploading aneks from ${i*count.value} to ${(i*count.value) + 100}`)
+//         aneksData.items.map(async (anekData, j) => {
+//             const anek = new Anekdot({
+//               text: anekData.text,
+//               creation: new Date(anekData.date * 1000),
+//               number: (count.value * i) + j
+//             });
+//             await anek.save();
+//           });
+//           await sleep(500)
+//     }
     
-}
+// }
 
 //Check the aneks when you start the app
 const checkAneks = async () => {
-    let count = new Parameter("count", 1)
+    let count = 0
     const aneksData = await getResponse(count, offset)
     const total = aneksData.count
     const Dbtotal = await Anekdot.countDocuments()
-
     console.log(`Aneks in DB: ${Dbtotal}, aneks available ${total}`)
     if (total <= Dbtotal) {
         console.log(`Aneks are OK, listening for new aneks...`)
     }
     else {
-        console.log(`Refreshing the db with ${total - Dbtotal} aneks`)
-        count = new Parameter("count", total - Dbtotal)
+        await Anekdot.find().remove()
+        console.log(`Refreshing the db`)
         const aneksData = await getResponse(count, offset)
-        let counter = Dbtotal
-        aneksData.items.map(async (anekData, i) => {
-            const anek = new Anekdot({
-              text: anekData.text,
-              creation: new Date(anekData.date * 1000),
-              number: counter
-            });
-            await anek.save();
-            counter++
-          });
-          await sleep(500)
+        while (count < total) {
+            aneksData.items.map(async (anekData, i) => {
+                const anek = new Anekdot({
+                  text: anekData.text,
+                  creation: new Date(anekData.date * 1000),
+                });
+                count++
+                console.log(count)
+                if (anekData.text.length > 10 && anekData.text.length < 2000 && !anekData.text.match(/http/gi) && !anekData.text.match(/t.me/gi)) {
+                    await anek.save();
+                }
+              });
+              await sleep(500)
+
+         }
+
     }
 }
 
@@ -123,9 +127,4 @@ const scheduleCheck = async (func) => {
 }
 
 launchBot()
-
-
-//uploadToDb()
-
-
 scheduleCheck(checkAneks)

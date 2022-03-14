@@ -52,18 +52,17 @@ const skipMenu = (skip, foundAnenks) => {
 
 
 //Start menu
-const startMenu = Telegraf.Extra.markdown().markup((m) =>
-  m.inlineKeyboard([
-    m.callbackButton("Поиск по строке", "search"),
-    m.callbackButton("Рандомный анек", "random"),
-  ])
-);
+// const startMenu = Telegraf.Extra.markdown().markup((m) =>
+//   m.inlineKeyboard([
+//     m.callbackButton("Поиск по строке", "search"),
+//     m.callbackButton("Рандомный анек", "random"),
+//   ])
+// );
 
 //Handling errors
 const errorMenu = (ctx) => {
   ctx.reply(
-    "Oшибочка! Среди анеков много мусора, поэтому бывают ошибочки\nПопробуй еще раз",
-    startMenu
+    "Oшибочка! Среди анеков много мусора, поэтому бывают ошибочки\nПопробуй еще раз"
   );
 }
 
@@ -160,22 +159,56 @@ const randomScene = new WizardScene("RANDOM_SCENE", async (ctx) => {
   try {
     const aneksCount = await Anekdot.countDocuments();
     const number = Math.floor(Math.random() * aneksCount);
-    const anekText = await Anekdot.findOne({ number: number });
+    const anekText = await Anekdot.findOne().skip(number);
     replyWithAnek(ctx, anekText.text)
     return ctx.scene.leave();
   } catch (e) {
+    console.log(e)
     errorMenu(ctx)
   }
 });
 
-//Split into substrings if too long
+//Lager
+const lagerScene = new WizardScene("LAGER_SCENE", async (ctx) => {
+  try {
+    ctx.reply('Пошел нахуй, пес')
+    return ctx.scene.leave();
+  } catch (e) {
+    console.log(e)
+    errorMenu(ctx)
+  }
+})
+
+//Psheno
+const pshenoScene = new WizardScene("PSHENO_SCENE", async (ctx) => {
+  try {
+    ctx.reply('Пшено для пидоров')
+    return ctx.scene.leave();
+  } catch (e) {
+    console.log(e)
+    errorMenu(ctx)
+  }
+})
+
+//Cidr 
+const cidrScene = new WizardScene("CIDR_SCENE", async (ctx) => {
+  try {
+    ctx.reply('Сидр - пидр')
+    return ctx.scene.leave();
+  } catch (e) {
+    console.log(e)
+    errorMenu(ctx)
+  }
+})
+
+
 const replyWithAnek = (ctx, string) => {
   if (string.length > 4000) {
     ctx.reply(string.substring(0,4000))
-    ctx.reply(string.substring(4000, string.length), startMenu)
+    ctx.reply(string.substring(4000, string.length))
   }
   else {
-    ctx.reply(string,startMenu)
+    ctx.reply(string)
   }
 }
 
@@ -186,23 +219,31 @@ const launchBot = () => {
     bot.use(session());
     bot.use(stage.middleware());
     bot.start(async (ctx) => {
-      const Dbtotal = await Anekdot.countDocuments()
-      const greetingString =
-  `Привет! \n \nЭто бот с анекдотами, намжи на кнпоку и введи строку, по которой бот должен начать поиск, чтобы найти анекдот \n \nНапример, введи, 'Грузин'\nНу или не вводи, мне вообще плевать \n\nВсего анеков: ${Dbtotal}`;
-      ctx.reply(greetingString, startMenu);
+    const Dbtotal = await Anekdot.countDocuments()
+    const greetingString =
+  `Привет, доступны команды /lager /psheno /sidr  \n\n/random для рандомного анекдота \n\nВсего анеков: ${Dbtotal}`;
+      ctx.reply(greetingString);
     });
-    bot.action("random", (ctx) => {
+    bot.command("random", (ctx) => {
       ctx.scene.leave()
       ctx.scene.enter("RANDOM_SCENE");
     });
-    bot.action("search", (ctx) => {
+    bot.command("cidr", (ctx) => {
       ctx.scene.leave()
-      ctx.scene.enter("SEARCH_SCENE");
-    });
+      ctx.scene.enter("CIDR_SCENE");
+    })
+    bot.command("psheno", (ctx) => {
+      ctx.scene.leave()
+      ctx.scene.enter("PSHENO_SCENE");
+    })
+    bot.command("lager", (ctx) => {
+      ctx.scene.leave()
+      ctx.scene.enter("LAGER_SCENE");
+    })
     bot.on("callback_query", async (ctx) => {
 
         try {
-            const callbackData = ctx.callbackQuery.data;
+        const callbackData = ctx.callbackQuery.data;
         const numRegex = /([0-9])+/;
         if (numRegex.test(callbackData)) {
           const anekText = await Anekdot.findOne({ number: callbackData });
